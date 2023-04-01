@@ -1,6 +1,21 @@
 /*
- * ABACOM USB relayboard driver - 1.0
+ * ABACOM USB relayboard driver - 1.1
  *
+ * Added description:
+ * Updated original version (1.0) by Heiko Finzel
+ * Source unknown, I must have found this somewhere on the net around 2016 (writing this in 04/2023)
+ * After upgrading from Kernel 3.16 to 5.15, the driver would immediately crash in 'send_relay_cmd'.
+ * The changes that caused this were apparently introduced in kernel 4.9. After some googling around,
+ * I found the below explanation which explains it very well. The data passed with a write to a USB device
+ * can't be from a local variable "on the stack", it must be allocated memory:
+ * https://bugzilla.kernel.org/show_bug.cgi?id=198067
+ *
+ * Creates device /dev/usb/relayboard0,1,2..
+ * Allows writing 1 byte value with state (0/1) for each of the 8 relays
+ * Allows reading 1 byte value with state of the 8 relays
+ *
+ * Updated 01.04.2023 by Jonas Keunecke (drjones16@web.de)
+ * https://github.com/jonesman/ABACOM-Relayboard
  */
 
 #include <linux/module.h>
@@ -322,12 +337,17 @@ error:
 }
 
 static int send_relay_cmd(struct usb_relayboard *dev, char cmd) {
-	char transfer_bytes[] = RELAY_CMD(cmd);
+	char cmd_bytes[] = RELAY_CMD(cmd);
+	char* transfer_bytes = kzalloc(RELAY_CMD_LENGTH, GFP_KERNEL);
+	memcpy(transfer_bytes, &cmd_bytes, RELAY_CMD_LENGTH);
+
 	int actual_length;
 	if (usb_bulk_msg( dev->udev, usb_sndbulkpipe(dev->udev, 2) , transfer_bytes, RELAY_CMD_LENGTH, 
 		&actual_length, HZ*2 )) {
+		kfree(transfer_bytes);
 		return -EFAULT;
 	}
+	kfree(transfer_bytes);
 	return actual_length != RELAY_CMD_LENGTH;
 }
 
