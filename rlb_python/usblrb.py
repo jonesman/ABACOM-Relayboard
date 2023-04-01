@@ -1,3 +1,13 @@
+#
+# Updated version for Python 3, 01.04.2023
+# Just a few syntax changes were needed
+# Original version as found on the ABACOM forums (linked from product page):
+# https://forum.abacom-online.de/phpBB3/viewtopic.php?f=51&t=3751
+#
+# Jonas Keunecke (drjones16@web.de)
+# https://github.com/jonesman/ABACOM-Relayboard
+# Original description below:
+
 #######################################################################
 
 ###        ABACOM USB-LRB relay board (Python 2 script)
@@ -111,7 +121,7 @@ READ =   0x80 # from A6275 Serial out
 def shiftOutBits(aStatus):
     setOutput(0) #All lines low
     for i in range(0,8): # Bit 0..7 testen...
-        if (aStatus & (1 << (7-i)))<>0 :
+        if (aStatus & (1 << (7-i)))!=0 :
             setOutput(DATA) #DATA high "1"
 	    # and generate CLK pulse...
             setOutput(CLK or DATA) #CLK high
@@ -147,7 +157,7 @@ def getRelays():
         msg = getInput() # CH341A API call
         inputState = msg[0] # Get status of CH341A D0..D7 lines
         # READ bits from A6275 Serial out (at D7 line)...
-        if (inputState & READ)<>0: 
+        if (inputState & READ)!=0: 
            result = result | (1 << (7-i));
         # ...and generate CLK pulse for next bi from A6275t...
         setOutput(CLK) #CLK high
@@ -155,8 +165,8 @@ def getRelays():
 
     powerFail = 0
     if result == 255:
-        powerFail == ((inputState & PFT)<>0)
-        if powerFail<>0:
+        powerFail == ((inputState & PFT)!=0)
+        if powerFail!=0:
             result = -1
 
     if powerFail == 0 :
@@ -184,11 +194,11 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv,"hd:s:",["deviceno=","status="])
     except getopt.GetoptError:
-        print 'usage: sudo usblrb.py -d <deviceno> -s <status>'
+        print('usage: sudo usblrb.py -d <deviceno> -s <status>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print 'usage: sudo usblrb.py -d <deviceno> -s <status>'
+            print('usage: sudo usblrb.py -d <deviceno> -s <status>')
             sys.exit()
         elif opt in ("-d", "--deviceno"):
             devnoString = arg
@@ -204,35 +214,36 @@ def main(argv):
     ### Method 2: Specify bus and address ... (not used here)
     # dev = usb.core.find(bus=1, address=35) - not used here
     ### Method 3: Find all CH341A and pick one from the list ... that is my favourite!
-    devs = usb.core.find(find_all=1, idVendor=0x1A86, idProduct=0x5512) # List of all CH341A in EPP/MEM/I2C mode
-    if len(devs) == 0:
-       print 'No device found!'
+    devs_iter = usb.core.find(find_all=1, idVendor=0x1A86, idProduct=0x5512) # List of all CH341A in EPP/MEM/I2C mode
+    if devs_iter is None:
+       print('No device found!')
        sys.exit()
-      
+
+    devs = list(devs_iter)
     if devnoString=='': # no device specified in command line
         for i in range(0, len(devs)): # Print out the decive list...
-            dev=devs[i]
-            print 'DEVICE',i,'found at BUS',dev.bus,' ADR', dev.address
-        print 'usage: sudo usblrb.py -d <deviceno> -s <status>'
+            dev = devs[i]
+            print('DEVICE',i,'found at BUS',dev.bus,' ADR', dev.address)
+        print('usage: sudo usblrb.py -d <deviceno> -s <status>')
         sys.exit()
     else:
         try:
             devIndex = int(devnoString)
         except ValueError:
-            print 'Invalid device no.!'
+            print('Invalid device no.!')
             sys.exit()
 
         try:
            dev=devs[devIndex] # pick device from list
         except IndexError:
-            print 'Device not found!'
+            print('Device not found!')
             sys.exit()
 
     if dev is None: # still no device? just in case...
-        print 'Device error!'
+        print('Device error!')
         sys.exit()
     ### Hurray! We have a device object now!
-    print 'DEVICE',devIndex,'found at BUS',dev.bus,' ADR', dev.address
+    print('DEVICE',devIndex,'found at BUS',dev.bus,' ADR', dev.address)
 
 
     ### Now get new STATUS from command line...
@@ -244,33 +255,33 @@ def main(argv):
         shiftOutBits(testStatus) # shift out some other status (silent without latch)
         status = getRelays() # readback new (test status)
         if status == testStatus: # does it match?
-           print 'Status read: ',oldStatus # print out the status
+           print('Status read: ',oldStatus) # print out the status
            shiftOutBits(oldStatus) # restore status we had before test
         else:
-           print 'Bad device' # this is likely not a USB-LRB
+           print('Bad device') # this is likely not a USB-LRB
         sys.exit()
 
     try:
         newStat = int(statusString)
     except ValueError:
-        print 'Invalid status value!'
+        print('Invalid status value!')
         sys.exit()
 
     if not (newStat in range(0,256)):
-        print 'Status value out of range (must be 0..255)'
+        print('Status value out of range (must be 0..255)')
         sys.exit()
     ### Hurray! We have a status value!
         
 
     ### Finally we set the new relay status on (global) device ....
     setRelays(newStat)
-    print 'Status set to', newStat
+    print('Status set to', newStat)
 
     ### if you feel better with that, you can verify... 
     if getRelays()==newStat:
-        print 'Verified successfully.'
+        print('Verified successfully.')
     else:
-        print 'Verfication failed!'
+        print('Verfication failed!')
 
     
 
