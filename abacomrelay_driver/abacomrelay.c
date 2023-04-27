@@ -3,7 +3,8 @@
  *
  * Added description:
  * Updated original version (1.0) by Heiko Finzel
- * Source unknown, I must have found this somewhere on the net around 2016 (writing this in 04/2023)
+ * Posted on the ABACOM forum in 11/2011 with link to http://da.finchi.de/2011/11/abacom-usb-relaisboard/#more-1220 (dead)
+ *
  * After upgrading from Kernel 3.16 to 5.15, the driver would immediately crash in 'send_relay_cmd'.
  * The changes that caused this were apparently introduced in kernel 4.9. After some googling around,
  * I found the below explanation which explains it very well. The data passed with a write to a USB device

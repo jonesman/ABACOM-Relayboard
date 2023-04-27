@@ -4,7 +4,7 @@
 # Original version as found on the ABACOM forums (linked from product page):
 # https://forum.abacom-online.de/phpBB3/viewtopic.php?f=51&t=3751
 #
-# Jonas Keunecke (drjones16@web.de)
+# updated by Jonas Keunecke (drjones16@web.de)
 # https://github.com/jonesman/ABACOM-Relayboard
 # Original description below:
 
